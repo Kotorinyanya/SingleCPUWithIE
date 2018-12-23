@@ -50,8 +50,8 @@ module ControlUnit(Op, Func, Z, Wmem, Wreg, Regrt, Reg2reg, Aluc, Shift,
 	
 	assign Wreg  = i_add  | i_sub  | i_and | i_or | i_xor  | 
 	i_sll | i_srl |i_sra |	i_addi | i_andi | 
-	i_ori | i_or | i_xori | i_lw  | i_lui | i_jal;
-	assign Regrt  = i_addi | i_andi | i_ori | i_xori |i_lw |i_lui;
+	i_ori | i_or | i_xori | i_lw  | i_lui | i_jal | i_mfc0;
+	assign Regrt  = i_addi | i_andi | i_ori | i_xori | i_lw | i_lui | i_mfc0 | i_mtc0;
 	assign jal = i_jal;
 	assign Reg2reg  = i_lw;
 	assign Shift  = i_sll | i_srl |i_sra;
@@ -65,9 +65,11 @@ module ControlUnit(Op, Func, Z, Wmem, Wreg, Regrt, Reg2reg, Aluc, Shift,
 	assign Aluc[0] = i_and | i_or | i_sll | i_srl |i_sra |
 	 i_andi  | i_ori;
 	assign Wmem  = i_sw;
+	assign Wsta = (i_mtc0 & (Inst[15:11] == 5'b11100))?1:0;
+	assign Wcau = (i_mtc0 & (Inst[15:11] == 5'b11101))?1:0;
+	assign Wsta = (i_mtc0 & (Inst[15:11] == 5'b11110))?1:0;
 
-	// add Mfc0
-	if (i_mfc == 0) begin
+	if (i_mfc == 1) begin
 		if (Inst[15:11] == 5'b11100) // Status
 			assign Mfc0 = 2'b01;
 		else if (Inst[15:11] == 5'b11101) // Cause
@@ -85,15 +87,15 @@ module ControlUnit(Op, Func, Z, Wmem, Wreg, Regrt, Reg2reg, Aluc, Shift,
 		assign Cause = 32'b0;
 		assign Wcau = 1;
 		assign Pcsrc = 3'b101; // base
-		assign Ibase = 5'h1c;
+		assign Ibase = 5'h1c; //Note: faild attemption: calculate base in CU
 	end else if(V == 1 & Sta[9] == 1) begin // Expection handling
 		assign Inta = 0;
 		assign Mtc0 = 0;
 		assign Wepc = 1;
-		assign Cause = 32'b0;
+		assign Cause = 32'b100;
 		assign Wcau = 1;
 		assign Pcsrc = 3'b101; // base
-		assign Ibase = 5'hXX; //TODO
+		assign Ibase = 5'h1c;
 	end else begin // no Interrupt or Expection
 		assign Inta = 0;
 		assign Mtc0 = 1;
@@ -104,8 +106,5 @@ module ControlUnit(Op, Func, Z, Wmem, Wreg, Regrt, Reg2reg, Aluc, Shift,
 		assign Pcsrc[0] = i_beq & Z | i_bne&~Z | i_j | i_jal;
 		assign Ibase = 5'h00;
 	end
-
-
-	// TODO: Wsta, Sta, 
 
 endmodule

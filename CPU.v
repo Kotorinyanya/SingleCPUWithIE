@@ -13,13 +13,14 @@ module CPU(Clk, Clrn, Inst, Dread, Iaddr, Wmem, Dwirte, Daddr);
     wire [1:0] Mfc0;
 	wire [31:0] cau;
 	wire Wcau, Wsta, Wepc;
+	wire [31:0] Ibase;
 
     reg [31:0] Cause, Status, EPC;
     
 	ControlUnit CU (Inst[31:26], Inst[5:0], zero,
 					Wmem, wreg, regrt, reg2reg, aluc,
                     shift, aluqb, Pcsrc, jal, se, V, Mfc0, Mtc0,
-					Inst, cau, Wcau, Wsta, Wepc);
+					Inst, cau, Wcau, Wsta, Wepc, Ibase);
 
 	wire [31:0] sa = {27'b0 , Inst[10:6]};  
 
@@ -72,7 +73,7 @@ module CPU(Clk, Clrn, Inst, Dread, Iaddr, Wmem, Dwirte, Daddr);
 	dff32_w write_E(EPC_tmp, Clk, Wepc, EPC);
 
 	// added epc and base
-	MUX8X32 nextpc(p4, adr, ra, jpc, EPC, 5'h1c, Pcsrc, npc);
+	MUX8X32 nextpc(p4, adr, ra, jpc, EPC, Ibase, Pcsrc, npc);
 
 
 endmodule
