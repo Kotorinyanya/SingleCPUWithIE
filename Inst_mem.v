@@ -20,8 +20,8 @@ module INSTMEM(Addr, Inst);
 	assign Ram[5'h0f] = 32'h302300EF; //andi R3 , R1,0xef
 	assign Ram[5'h10] = 32'h342300EF; //ori   R3 , R1,0xef
 	assign Ram[5'h11] = 32'h382300EF; //xori  R3 , R1,0xef
-	assign Ram[5'h12] = 32'had420004; //sw R2 , 1(R10)
-	assign Ram[5'h13] = 32'h8d420004; //lw R2 , 1(R10)
+	assign Ram[5'h12] = 32'had420001; //sw R2 , 1(R10)
+	assign Ram[5'h13] = 32'h91420001; //lw R2 , 1(R10)
 	assign Ram[5'h14] = 32'h0c000016; //jar 16
 	assign Ram[5'h15] = 32'h00223024; //and R6 , R1 , R2
 	assign Ram[5'h16] = 32'h00223020; //add R6 , R1 , R2
@@ -29,6 +29,13 @@ module INSTMEM(Addr, Inst);
 	assign Ram[5'h18] = 32'h00223020; //add R6 , R1 , R2
 	assign Ram[5'h19] = 32'h00223024; //and R6 , R1 , R2
 	assign Ram[5'h1a] = 32'h00800008; //jr R4
-
+    
+    
+    //reserved region for interupt and exception handling
+    assign Ram[5'h1c] = 32'b01000000000010101110000000000000; //mfc0 R10, Status(11100)
+    assign Ram[5'h1d] = 32'b00100001010010100000001000000000; //andi R10, R10, 512
+    assign Ram[5'h1e] = 32'b01000000100010101110000000000000; //mtc0 R10, Status
+    assign Ram[5'h1f] = 32'b01000010000000000000000000011000; //eret
+    
 	assign Inst = Ram[Addr[6:2]];
 endmodule

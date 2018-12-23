@@ -1,8 +1,9 @@
-module ALU(X, Y, Aluc, R, Z);
+module ALU(X, Y, Aluc, R, Z, V);
 	input [31:0] X, Y;
 	input [3:0] Aluc;
 	output wire [31:0] R;
 	output wire Z;
+	output wire V;
 
 	wire [31:0] d_and = X & Y;
 	wire [31:0] d_or  = X | Y;
@@ -17,4 +18,5 @@ module ALU(X, Y, Aluc, R, Z);
 	MUX4X32 sel(d_as, d_and_or, d_xor_lui, d_sh, Aluc[1:0], R);
    
 	assign Z = ~|R;
+	assign V = ~Aluc[1] & ~Aluc[0] & ~X[31] & ~Y[31] & R[31] | ~Aluc[1] & ~Aluc[0] & X[31] & Y[31] & ~R[31] | ~Aluc[1] & Aluc[0] & ~X[31] & Y[31] & R[31] | ~Aluc[1] & Aluc[0] & X[31] & ~Y[31] & ~R[31];
 endmodule
