@@ -6,7 +6,7 @@ module ControlUnit(Op, Func, Z, Wmem, Wreg, Regrt, Reg2reg, Aluc, Shift,
 	input Z;
 	input V;
 	output [3:0] Aluc;
-	output [1:0] Pcsrc;
+	output [2:0] Pcsrc;
 	output Wmem, Wreg, Regrt, Se, Shift, Aluqb, Reg2reg, jal;
 	output [1:0] Mfc0;
 	output Mtc0;
@@ -66,45 +66,20 @@ module ControlUnit(Op, Func, Z, Wmem, Wreg, Regrt, Reg2reg, Aluc, Shift,
 	 i_andi  | i_ori;
 	assign Wmem  = i_sw;
 	assign Wsta = (i_mtc0 & (Inst[15:11] == 5'b11100))?1:0;
-	assign Wcau = (i_mtc0 & (Inst[15:11] == 5'b11101))?1:0;
-	assign Wsta = (i_mtc0 & (Inst[15:11] == 5'b11110))?1:0;
-
-	if (i_mfc == 1) begin
-		if (Inst[15:11] == 5'b11100) // Status
-			assign Mfc0 = 2'b01;
-		else if (Inst[15:11] == 5'b11101) // Cause
-			assign Mfc0 = 2'b10;
-		else if (Inst[15:11] == 5'b11110) // EPC
-			assign Mfc0 = 2'b11;
-  	end else begin
-		assign Mfc0 = 2'b00;
-  	end
-
-	if (Intr == 1 & Sta[9] == 1) begin // Interrupt handling
-		assign Inta = 1;
-		assign Mtc0 = 0;
-		assign Wepc = 1;
-		assign Cause = 32'b0;
-		assign Wcau = 1;
-		assign Pcsrc = 3'b101; // base
-		assign Ibase = 5'h1c; //Note: faild attemption: calculate base in CU
-	end else if(V == 1 & Sta[9] == 1) begin // Expection handling
-		assign Inta = 0;
-		assign Mtc0 = 0;
-		assign Wepc = 1;
-		assign Cause = 32'b100;
-		assign Wcau = 1;
-		assign Pcsrc = 3'b101; // base
-		assign Ibase = 5'h1c;
-	end else begin // no Interrupt or Expection
-		assign Inta = 0;
-		assign Mtc0 = 1;
-		assign Wepc = 0;
-		assign Wcau = 0;
-		assign Pcsrc[2] = 0;
-		assign Pcsrc[1] = i_jr | i_j | i_jal;
-		assign Pcsrc[0] = i_beq & Z | i_bne&~Z | i_j | i_jal;
-		assign Ibase = 5'h00;
-	end
-
+    assign Mfc0 = (i_mfc0 == 1 & Inst[15:11] == 5'b11100) ? 2'b01 :     // Status
+                (i_mfc0 == 1 & Inst[15:11] == 5'b11101) ? 2'b10 :       // Cause
+                (i_mfc0 == 1 & Inst[15:11] == 5'b11110) ? 2'b11 :       // EPC
+                                                          2'b00;
+   assign Mtc0 = ((Intr == 1 & Sta[9] == 1) | (V == 1 & Sta[9] == 1))?0:1;                                                       
+   assign Inta = (Intr == 1 & Sta[9] == 1)?1:0;
+   assign Wepc = ((Intr == 1 & Sta[9] == 1) | (V == 1 & Sta[9] == 1))?1:0;
+   assign Wcau = ((Intr == 1 & Sta[9] == 1) | (V == 1 & Sta[9] == 1))?1:0;
+   assign Cause = (Intr == 1 & Sta[9] == 1) ? 32'b0 :
+                  (V == 1 & Sta[9] == 1) ? 32'b100 :
+                                            32'b1;
+   assign Pcsrc[2] = ((Intr == 1 & Sta[9] == 1) | (V == 1 & Sta[9] == 1) | i_eret)?1:0;
+   assign Pcsrc[1] = i_jr | i_j | i_jal;
+   assign Pcsrc[0] = i_beq & Z | i_bne&~Z | i_j | i_jal | i_eret;
+   assign Ibase = 32'h54;   //5'h15   //Note: faild attemption: calculate base in CU
+                    
 endmodule
